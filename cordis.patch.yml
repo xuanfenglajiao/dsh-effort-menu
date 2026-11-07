@@ -1,4 +1,4 @@
-# Mount the effort-slider bundle row in this profile.
+# Mount the effort-menu bundle row in this profile.
 - insert:
-    - id: effort-slider
-      name: dsh-effort-slider
+    - id: effort-menu
+      name: dsh-effort-menu

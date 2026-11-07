@@ -1,5 +1,5 @@
 {
-  "name": "dsh-effort-slider",
+  "name": "dsh-effort-menu",
   "version": "1.0.0",
   "description": "Replaces the composer's model menu with a recent-models list, an all-providers flyout, and a draggable reasoning-effort slider.",
   "keywords": [
@@ -11,13 +11,13 @@
   ],
   "license": "MIT",
   "author": "LYLMagui",
-  "homepage": "https://github.com/LYLMagui/dsh-effort-slider#readme",
+  "homepage": "https://github.com/xuanfenglajiao/dsh-effort-menu#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LYLMagui/dsh-effort-slider.git"
+    "url": "git+https://github.com/xuanfenglajiao/dsh-effort-menu.git"
   },
   "bugs": {
-    "url": "https://github.com/LYLMagui/dsh-effort-slider/issues"
+    "url": "https://github.com/xuanfenglajiao/dsh-effort-menu/issues"
   },
   "type": "module",
   "exports": {

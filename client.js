@@ -1,5 +1,5 @@
 /**
- * Client half of the effort-slider bundle.
+ * Client half of the effort-menu bundle.
  *
  * It shadows the composer's `conversation.input.model` single slot at priority -1
  * (the shipped seat registers at 0, and the lowest priority renders). The data
@@ -8,13 +8,13 @@
  * `select()` keeps the composer and the `/model` popup in sync.
  */
 window.__ModuleLoader__.load({
-  id: 'dsh-effort-slider',
+  id: 'dsh-effort-menu',
   factory(require) {
     const React = require('react');
     const ReactDOM = require('react-dom');
     const h = React.createElement;
 
-    const NS = 'effort-slider';
+    const NS = 'effort-menu';
 
     const zh = {
       'menu.aria': '模型与思考强度',
@@ -212,7 +212,7 @@ window.__ModuleLoader__.load({
       );
     }
 
-    const RECENT_KEY = 'dsh-effort-slider/recent-models';
+    const RECENT_KEY = 'dsh-effort-menu/recent-models';
     /** The menu lists at most this many recent models, the current one included. */
     const RECENT_VISIBLE = 3;
 
@@ -261,7 +261,7 @@ window.__ModuleLoader__.load({
       return [{ provider, model }, ...list.filter((entry) => entry.provider !== provider || entry.model !== model)];
     }
 
-    const LAST_EFFORT_KEY = 'dsh-effort-slider/last-effort';
+    const LAST_EFFORT_KEY = 'dsh-effort-menu/last-effort';
 
     /** The effort level the user last had on a model that offers levels, if one was stored. */
     function readLastEffort() {
@@ -1192,7 +1192,7 @@ window.__ModuleLoader__.load({
             first.focus({ preventScroll: true });
           },
         },
-        h('style', { 'data-plugin': 'dsh-effort-slider' }, CSS),
+        h('style', { 'data-plugin': 'dsh-effort-menu' }, CSS),
         trigger,
         open ? ReactDOM.createPortal(h('div', { className: 'es-root' }, menu, showAll ? flyout : null), document.body) : null,
       );
@@ -1211,7 +1211,7 @@ window.__ModuleLoader__.load({
      */
     function apply(ctx) {
       ctx.inject(['locale', 'slots', 'modelDirectories', 'sessions'], (scope) => {
-        scope.effect(() => scope.locale.register(NS, { zh, en }), 'effort-slider: dictionaries');
+        scope.effect(() => scope.locale.register(NS, { zh, en }), 'effort-menu: dictionaries');
         const models = scope.modelDirectories;
         const sessions = scope.sessions;
         scope.slots.inject('conversation.input.model', () =>

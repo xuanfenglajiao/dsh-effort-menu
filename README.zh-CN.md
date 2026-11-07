@@ -1,15 +1,19 @@
-# dsh-effort-slider
+# dsh-effort-menu
 
-为 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 输入框设计的模型菜单，内置可拖动的渐变滑杆，用来调节模型的思考强度（推理等级）。
+给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 输入框换一个模型菜单，选模型和调思考强度在同一个弹层里完成。
 
 [![MIT license](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![DSH 0.2.2-rc.1 tested](https://img.shields.io/badge/DSH-0.2.2--rc.1%20tested-4d6bfe)](#兼容性)
 
 [English](./README.md) | 简体中文
 
-本插件替换输入框的模型选择器。菜单先列出最近使用的模型，悬停后在右侧展开全部提供商的模型，底部是一条滑杆，节点对应当前模型的各档思考强度。它与官方选择器、`/model` 弹窗读写同一份会话级模型目录，三处状态始终一致。
+官方菜单把思考强度放在二级菜单「推理等级」里，换完模型还要再点进去，从 Default、Low、High、Max 里挑。本插件参考 zcode 的做法，把档位做成菜单底部的一条滑杆。当前模型有几档，滑杆上就有几个点，选完模型直接拖。
+
+顶部列着最近用过的三个模型，悬停提供商行会在右侧展开全部模型。读写走的是官方的会话模型目录，和原生选择器、`/model` 弹窗共用一份状态。
 
 ## 截图
+
+模型菜单，底部是当前模型的思考强度滑杆。
 
 | 浅色 | 深色 |
 | --- | --- |
@@ -23,34 +27,67 @@
 
 ## 功能
 
-- **最近使用优先。** 菜单显示最近用过的三个模型，当前模型始终在列。悬停或点击提供商行，会在右侧展开所有提供商的模型。选完模型后菜单保持打开，可以接着调节思考强度。
-- **思考强度滑杆。** 节点数量等于当前模型在 `reasoning.efforts` 中公布的档位。可以点击节点，点击旋钮旁边的空白处会朝点击方向移动一档，也可以拖动，旋钮在节点之间吸附，松手时只提交一次选择。
-- **独立的“默认”档。** 模型有档位但没有自己的默认值时，滑杆最左侧会多出一个“默认”节点。选中它不会发送显式等级，由提供商自己的默认值生效。
-- **切换模型时的强度处理。** 当前使用的等级在新模型也有时直接沿用，否则请求新模型的最高档。当前没有指定等级时，使用新模型自己的默认值。
-- **失败看得见。** 模型目录加载失败，或某个提供商加载失败，都会在菜单里提示并给出**重试**按钮，不会留一个空列表。选择被拒绝时会在菜单内提示，如果会话被另一个正在运行的 DSH 占用，会给出专门的说明。
-- **键盘与焦点。** `↑`/`↓` 在菜单项之间移动。焦点在滑杆上时，方向键、`Home`、`End` 用来调节滑杆。在提供商行按 `→` 展开模型列表，`Esc` 关闭菜单并把焦点还给触发按钮。
-- **跟随主题。** 使用应用的设计 token，适配亮色和暗色主题，遵循 `prefers-reduced-motion`。输入框隐藏模型文字时，会退化为模型图标。
-- 界面文字提供**中文和英文**。
+- 切换模型时沿用当前档位，新模型没有这一档就用它的最高档。
+- 模型没有自带默认值时，滑杆最左侧多一个「默认」档，交给提供商决定。
+- 模型列表加载失败会在菜单里提示，可以直接重试。
+- 支持键盘操作。方向键切换菜单项、调节滑杆，`Esc` 关闭菜单。
+- 跟随应用的浅色和深色主题，界面提供中文和英文。
 
 ## 安装
 
 需要所用的 DeepSeek Harness 自带 `dsh-client-ui-conversation`、`dsh-client-ui-model-selection` 和 `dsh-client-locale` 三个客户端包（见[兼容性](#兼容性)）。
 
-**由 CLI 管理的 profile**（`web`、`headless` 等）用一条命令安装。
+### Web 端
+
+用 CLI 管理 profile 时，一条命令装进 `web`。
 
 ```sh
-dsh plugin --profile web add github:LYLMagui/dsh-effort-slider
+dsh plugin --profile web add github:xuanfenglajiao/dsh-effort-menu
 ```
 
-**桌面端。** `desktop` profile 由应用独占管理，`dsh plugin` 会直接拒绝。请先克隆仓库，再打开 **Plugin Manager**，选择安装这个本地目录。
+本插件没有构建步骤，浏览器端就是仓库里提交的 `client.js`。装完重启 `dsh web`，或者刷新页面。
+
+### 桌面端
+
+`desktop` profile 由应用独占管理，`dsh plugin` 会直接拒绝。先把仓库克隆到本地，再打开 **Plugin Manager**，选择安装这个目录。
 
 ```sh
-git clone https://github.com/LYLMagui/dsh-effort-slider.git
+git clone https://github.com/xuanfenglajiao/dsh-effort-menu.git
 ```
 
-安装后重启 DeepSeek Harness，或重新加载窗口。本插件没有构建步骤，浏览器端就是仓库里提交的 `client.js`。
+装完重启应用。
 
-**卸载**时执行 `dsh plugin --profile web remove dsh-effort-slider`，桌面端在 Plugin Manager 里移除即可。
+### 手动安装
+
+不想动 CLI 时，可以直接改 profile 自己的 `package.json`。
+
+**Web profile。** 编辑 `~/.dsh/profiles/web/package.json`，在 `dependencies` 里加上本插件。
+
+```json
+"dependencies": {
+  "dsh-effort-menu": "github:xuanfenglajiao/dsh-effort-menu"
+}
+```
+
+再把它追加到 `dsh.profile.bundles` 数组里。
+
+```json
+"bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "dsh-effort-menu"]
+```
+
+然后在同一目录执行 `pnpm install`，重启 `dsh web`。
+
+**桌面端 profile。** 编辑 `~/.dsh/profiles/desktop/package.json`，只在 `dependencies` 里加同样的条目。桌面端不把插件写进 `bundles` 列表。
+
+```json
+"dependencies": {
+  "dsh-effort-menu": "github:xuanfenglajiao/dsh-effort-menu"
+}
+```
+
+执行 `pnpm install`，重启应用。
+
+**卸载**时执行 `dsh plugin --profile web remove dsh-effort-menu`，桌面端在 Plugin Manager 里移除即可。
 
 ## 兼容性
 
