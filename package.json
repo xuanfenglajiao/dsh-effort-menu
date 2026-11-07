@@ -32,11 +32,24 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "README.zh-CN.md"
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE",
+    "screenshots.json",
+    "docs/screenshots/*.png"
   ],
+  "engines": {
+    "node": ">=22.19",
+    "dsh": ">=0.2.2-rc.1"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "compatibility": {
+      "dshReleases": {
+        "0.2.2-rc.1": "compatible"
+      }
     },
     "client": {
       "platform": "web",
