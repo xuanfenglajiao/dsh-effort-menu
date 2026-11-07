@@ -42,16 +42,20 @@ Requires a DeepSeek Harness build that ships the `dsh-client-ui-conversation`, `
 With a CLI-managed profile, one command installs it into `web`.
 
 ```sh
-dsh plugin --profile web add github:xuanfenglajiao/dsh-effort-menu
+dsh plugin --profile web add dsh-effort-menu
 ```
 
 There is no build step. The browser half is the committed `client.js`. Restart `dsh web`, or reload the page.
 
 ### Desktop
 
-The `desktop` profile is managed by the app, so `dsh plugin` refuses it. Clone the repository, then open **Plugin Manager** and install the checkout directory.
+The `desktop` profile is managed by the app. Fully quit the app before using the CLI, or keep it running and install the checkout directory through **Plugin Manager**.
 
 ```sh
+# CLI install, with the desktop app fully quit
+dsh plugin --profile desktop add dsh-effort-menu
+
+# Or clone it and point Plugin Manager at the directory
 git clone https://github.com/xuanfenglajiao/dsh-effort-menu.git
 ```
 
@@ -65,7 +69,7 @@ If you would rather not use the CLI, edit the profile's own `package.json`.
 
 ```json
 "dependencies": {
-  "dsh-effort-menu": "github:xuanfenglajiao/dsh-effort-menu"
+  "dsh-effort-menu": "^1.0.0"
 }
 ```
 
@@ -81,7 +85,7 @@ Run `pnpm install` in that directory and restart `dsh web`.
 
 ```json
 "dependencies": {
-  "dsh-effort-menu": "github:xuanfenglajiao/dsh-effort-menu"
+  "dsh-effort-menu": "^1.0.0"
 }
 ```
 

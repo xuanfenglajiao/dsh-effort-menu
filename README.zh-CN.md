@@ -42,16 +42,20 @@
 用 CLI 管理 profile 时，一条命令装进 `web`。
 
 ```sh
-dsh plugin --profile web add github:xuanfenglajiao/dsh-effort-menu
+dsh plugin --profile web add dsh-effort-menu
 ```
 
 本插件没有构建步骤，浏览器端就是仓库里提交的 `client.js`。装完重启 `dsh web`，或者刷新页面。
 
 ### 桌面端
 
-`desktop` profile 由应用独占管理，`dsh plugin` 会直接拒绝。先把仓库克隆到本地，再打开 **Plugin Manager**，选择安装这个目录。
+`desktop` profile 由应用管理。先完全退出桌面应用，再用 CLI 安装；或者不退出，打开应用内的 **Plugin Manager** 选择安装这个目录。
 
 ```sh
+# CLI 安装，需要先完全退出桌面应用
+dsh plugin --profile desktop add dsh-effort-menu
+
+# 或者克隆下来，在 Plugin Manager 里选择这个目录
 git clone https://github.com/xuanfenglajiao/dsh-effort-menu.git
 ```
 
@@ -65,7 +69,7 @@ git clone https://github.com/xuanfenglajiao/dsh-effort-menu.git
 
 ```json
 "dependencies": {
-  "dsh-effort-menu": "github:xuanfenglajiao/dsh-effort-menu"
+  "dsh-effort-menu": "^1.0.0"
 }
 ```
 
@@ -81,7 +85,7 @@ git clone https://github.com/xuanfenglajiao/dsh-effort-menu.git
 
 ```json
 "dependencies": {
-  "dsh-effort-menu": "github:xuanfenglajiao/dsh-effort-menu"
+  "dsh-effort-menu": "^1.0.0"
 }
 ```
 
