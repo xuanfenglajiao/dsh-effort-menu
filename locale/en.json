@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Reasoning effort slider",
+    "description": "Replaces the reasoning-effort indicator in the composer model menu with a draggable gradient slider."
+  }
+}

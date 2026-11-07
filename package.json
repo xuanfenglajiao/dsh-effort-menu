@@ -1,0 +1,51 @@
+{
+  "name": "dsh-effort-slider",
+  "version": "1.0.0",
+  "description": "Replaces the composer's model menu with a recent-models list, an all-providers flyout, and a draggable reasoning-effort slider.",
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "reasoning-effort",
+    "model-selector"
+  ],
+  "license": "MIT",
+  "author": "LYLMagui",
+  "homepage": "https://github.com/LYLMagui/dsh-effort-slider#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LYLMagui/dsh-effort-slider.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LYLMagui/dsh-effort-slider/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.zh-CN.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-model-selection"
+      ]
+    }
+  }
+}
