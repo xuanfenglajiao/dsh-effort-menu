@@ -3,7 +3,7 @@
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 输入框换一个模型菜单，选模型和调思考强度在同一个弹层里完成。
 
 [![MIT license](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![DSH 0.2.2-rc.1 tested](https://img.shields.io/badge/DSH-0.2.2--rc.1%20tested-4d6bfe)](#兼容性)
+[![DSH >=0.2.2-rc.1](https://img.shields.io/badge/DSH-%3E%3D0.2.2--rc.1-4d6bfe)](#兼容性)
 
 [English](./README.md) | 简体中文
 
@@ -35,7 +35,7 @@
 
 ## 安装
 
-需要所用的 DeepSeek Harness 自带 `dsh-client-ui-conversation`、`dsh-client-ui-model-selection` 和 `dsh-client-locale` 三个客户端包（见[兼容性](#兼容性)）。
+需要 DSH `0.2.2-rc.1` 或更新版本，并自带 `dsh-client-ui-conversation`、`dsh-client-ui-model-selection` 和 `dsh-client-locale` 三个客户端包（见[兼容性](#兼容性)）。
 
 ### Web 端
 
@@ -95,7 +95,7 @@ git clone https://github.com/xuanfenglajiao/dsh-effort-menu.git
 
 ## 兼容性
 
-- 开发和测试用的是 DeepSeek Harness Desktop 44.7.0（DSH `0.2.2-rc.1`），Windows 11。更早的 DSH 版本没有测过。
+- 支持 DSH `0.2.2-rc.1` 及更新版本。开发和测试用的是 DeepSeek Harness Desktop 44.7.0（DSH `0.2.2-rc.1`），Windows 11；更早的 DSH 版本不受支持。
 - 当前模型必须公布 `reasoning.efforts`，滑杆才有内容可显示。否则菜单会提示该模型没有可选档位。
 - 在子代理会话中不渲染任何内容。
 

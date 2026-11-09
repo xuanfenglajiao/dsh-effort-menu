@@ -3,7 +3,7 @@
 A replacement model menu for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) composer: pick a model and set its reasoning effort in the same popup.
 
 [![MIT license](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![DSH 0.2.2-rc.1 tested](https://img.shields.io/badge/DSH-0.2.2--rc.1%20tested-4d6bfe)](#compatibility)
+[![DSH >=0.2.2-rc.1](https://img.shields.io/badge/DSH-%3E%3D0.2.2--rc.1-4d6bfe)](#compatibility)
 
 English | [简体中文](./README.zh-CN.md)
 
@@ -35,7 +35,7 @@ Hovering the provider row opens a flyout with every provider's models.
 
 ## Install
 
-Requires a DeepSeek Harness build that ships the `dsh-client-ui-conversation`, `dsh-client-ui-model-selection` and `dsh-client-locale` client packages (see [Compatibility](#compatibility)).
+Requires DSH `0.2.2-rc.1` or newer, with a build that ships the `dsh-client-ui-conversation`, `dsh-client-ui-model-selection` and `dsh-client-locale` client packages (see [Compatibility](#compatibility)).
 
 ### Web
 
@@ -95,7 +95,7 @@ Run `pnpm install` and restart the app.
 
 ## Compatibility
 
-- Developed and tested on DeepSeek Harness Desktop 44.7.0 (DSH `0.2.2-rc.1`) on Windows 11. Earlier DSH lines are untested.
+- Supports DSH `0.2.2-rc.1` and newer. Developed and tested on DeepSeek Harness Desktop 44.7.0 (DSH `0.2.2-rc.1`) on Windows 11; earlier DSH versions are not supported.
 - The current model must expose `reasoning.efforts` for the slider to have anything to show. Otherwise the menu says the model provides no levels.
 - Renders nothing in subagent sessions.
 
