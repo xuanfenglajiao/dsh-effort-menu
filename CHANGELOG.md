@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+Documentation only. The published README now states the supported DSH version, the npm install command, and the correct desktop install steps.
+
 ## 1.0.0
 
 First public release.
