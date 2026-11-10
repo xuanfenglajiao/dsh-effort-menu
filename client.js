@@ -22,6 +22,7 @@ window.__ModuleLoader__.load({
       'menu.recent': '最近使用',
       'menu.allModels': '全部模型',
       'menu.effort': '思考强度',
+      'menu.manageModels': '管理模型',
       'provider.account': 'DeepSeek 账号',
       'trigger.fallback': '请选择模型',
       'trigger.selectAria': '请选择模型',
@@ -44,6 +45,7 @@ window.__ModuleLoader__.load({
       'menu.recent': 'Recently used',
       'menu.allModels': 'All models',
       'menu.effort': 'Thinking intensity',
+      'menu.manageModels': 'Manage models',
       'provider.account': 'DeepSeek Account',
       'trigger.fallback': 'Select model',
       'trigger.selectAria': 'Select model',
@@ -87,7 +89,7 @@ window.__ModuleLoader__.load({
 .es-providerChevron{width:14px;height:14px;flex:none;color:var(--dsw-alias-label-caption,var(--dsw-alias-label-secondary));transition:transform .18s ease}
 .es-flyout{box-sizing:border-box;position:fixed;z-index:1101;width:280px;max-width:calc(100vw - 24px);max-height:min(480px,calc(100vh - 24px));display:flex;flex-direction:column;padding:6px;border-radius:12px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-specific-input-major,var(--dsw-alias-bg-overlay));box-shadow:var(--dsw-elevation-prominent,0 18px 48px rgba(0,0,0,.45));color:var(--dsw-alias-label-primary);font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px));overflow:hidden}
 .es-flyout:focus{outline:none}
-.es-flyoutList{display:flex;flex-direction:column;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
+.es-flyoutList{display:flex;flex-direction:column;min-height:0;flex:1;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
 .es-sectionLabel{flex:none;padding:7px 8px 3px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));font-size:calc(11px + var(--dsh-content-font-delta-secondary,0px));line-height:16px;font-weight:500}
 .es-modelGroup{display:flex;flex-direction:column}
 .es-groupHeading{flex:none;padding:6px 8px 2px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));font-size:calc(11px + var(--dsh-content-font-delta-secondary,0px));line-height:16px;font-weight:500}
@@ -102,6 +104,13 @@ window.__ModuleLoader__.load({
 .es-check{flex:0 0 14px;display:grid;place-items:center;color:var(--dsw-alias-label-primary)}
 .es-effortDivider{border-top:1px solid var(--dsw-alias-border-l1);margin:8px 0 0;flex:none}
 .es-effortBlock{padding:8px 2px 2px;border-radius:10px;flex:none}
+.es-footerDivider{border-top:1px solid var(--dsw-alias-border-l1);margin:8px 0 0;flex:none}
+.es-footer{padding:4px 0 0;flex:none}
+.es-manageRow{box-sizing:border-box;width:100%;height:calc(36px + var(--dsh-content-font-delta,0px));display:flex;align-items:center;gap:8px;padding:0 8px;margin:0;border:0;border-radius:8px;background:0 0;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none;transition:background-color .16s ease}
+@media (hover:hover){.es-manageRow:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}}
+.es-manageRow:focus-visible{background:var(--dsw-alias-interactive-bg-hover);box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l2)}
+.es-manageRow:disabled{color:var(--dsw-alias-label-dimmed);cursor:default}
+.es-manageLabel{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px))}
 .es-effortHeader{display:flex;align-items:center;gap:8px;padding:2px 6px 0}
 .es-effortLabel{color:var(--dsw-alias-label-primary);flex:none;font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px))}
 .es-effortValue{color:var(--dsw-alias-label-primary);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px))}
@@ -210,6 +219,98 @@ window.__ModuleLoader__.load({
         h('path', { d: 'M2.5 4v4c0 1.38 2.46 2.5 5.5 2.5s5.5-1.12 5.5-2.5V4' }),
         h('path', { d: 'M2.5 8v4c0 1.38 2.46 2.5 5.5 2.5s5.5-1.12 5.5-2.5V8' }),
       );
+    }
+
+    /**
+     * Click the Models row in an open Settings dialog. The row index comes from the
+     * live `settings.section` ledger (the shell sorts its nav by `order`), with a
+     * localized label fallback for shells whose registry is not exposed here.
+     */
+    function selectModelsSection(scope, panel) {
+      let index = -1;
+      try {
+        const sections = scope.slots
+          .entries('settings.section')
+          .map((entry) => ({
+            id: entry.options === undefined || entry.options.id === undefined ? '' : entry.options.id,
+            order: entry.options === undefined || entry.options.order === undefined ? 0 : entry.options.order,
+          }))
+          .sort((left, right) => left.order - right.order);
+        index = sections.findIndex((section) => section.id === 'models');
+      } catch (_error) {
+        index = -1;
+      }
+      const nav = panel.querySelector('nav');
+      const buttons = nav === null ? [] : Array.from(nav.querySelectorAll('button'));
+      let target = index >= 0 && index < buttons.length ? buttons[index] : null;
+      if (target === null) {
+        const label = /^(模型|Models?|モデル|모델|Модели|Modèles|Modelle|Modelos|Modelli)$/i;
+        target = buttons.find((button) => label.test((button.textContent || '').trim())) || null;
+      }
+      if (target !== null) target.click();
+    }
+
+    /**
+     * Open Settings on its Models section. The settings shell keeps its open
+     * state in the store registered on `sidebar.settings`, so the exact live
+     * instance is reachable through the slot ledger. If that route is absent,
+     * invoke the shipped `settings.open` command and click the Models row in the
+     * rendered dialog instead.
+     */
+    function openModelsSettings(scope) {
+      const existing = document.querySelector('[data-shortcut-modal="settings"]');
+      if (existing !== null) {
+        selectModelsSection(scope, existing);
+        return;
+      }
+      let opened = false;
+      try {
+        const entries =
+          typeof scope.slots.entriesOfSlot === 'function'
+            ? scope.slots.entriesOfSlot('sidebar.settings')
+            : scope.slots.entries('sidebar.settings');
+        const entry = entries.find(
+          (candidate) =>
+            candidate !== undefined &&
+            candidate !== null &&
+            candidate.store !== undefined &&
+            typeof candidate.store.create === 'function',
+        );
+        const instance = entry === undefined ? undefined : entry.store.create();
+        if (
+          instance !== undefined &&
+          instance !== null &&
+          instance.actions !== undefined &&
+          typeof instance.actions.openSection === 'function'
+        ) {
+          instance.actions.openSection('models');
+          opened = true;
+        }
+      } catch (_error) {
+        opened = false;
+      }
+      if (!opened) {
+        const shortcuts = scope.shortcuts;
+        const registry = shortcuts === undefined || shortcuts === null ? undefined : shortcuts.registry;
+        if (registry !== undefined && registry !== null && typeof registry.invoke === 'function') {
+          registry.invoke('settings.open', { region: 'page', modal: null, target: null });
+        }
+      }
+      // The dialog is portaled on the next React commit; retry briefly when the
+      // shell store route missed and the command opened the dialog asynchronously.
+      let attempts = 0;
+      const settle = () => {
+        const panel = document.querySelector('[data-shortcut-modal="settings"]');
+        if (panel === null) {
+          if (attempts < 40) {
+            attempts += 1;
+            window.setTimeout(settle, 50);
+          }
+          return;
+        }
+        selectModelsSection(scope, panel);
+      };
+      window.setTimeout(settle, 30);
     }
 
     const RECENT_KEY = 'dsh-effort-menu/recent-models';
@@ -576,7 +677,7 @@ window.__ModuleLoader__.load({
      * @param props - owner share (`locked`), the injected directory face, and locale `t`.
      * @returns the trigger button plus, while open, a portaled menu.
      */
-    function EffortSeat({ locked, available, directory, load, select, resolveText, t }) {
+    function EffortSeat({ locked, available, directory, load, select, resolveText, t, manageModels }) {
       const state = React.useSyncExternalStore(
         (callback) => directory.subscribe(callback),
         () => directory.getSnapshot(),
@@ -1159,7 +1260,7 @@ window.__ModuleLoader__.load({
               return;
             }
             if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-            const rows = Array.from(event.currentTarget.querySelectorAll('.es-modelRow')).filter((row) => !row.disabled);
+            const rows = Array.from(event.currentTarget.querySelectorAll('.es-modelRow, .es-manageRow')).filter((row) => !row.disabled);
             if (rows.length === 0) return;
             event.preventDefault();
             const at = rows.indexOf(document.activeElement);
@@ -1169,6 +1270,23 @@ window.__ModuleLoader__.load({
           },
         },
         h('div', { className: 'es-flyoutList' }, allGroups),
+        h('div', { className: 'es-footerDivider' }),
+        h(
+          'div',
+          { className: 'es-footer' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'es-manageRow',
+              onClick: () => {
+                close(false);
+                if (typeof manageModels === 'function') manageModels();
+              },
+            },
+            h('span', { className: 'es-manageLabel' }, t('menu.manageModels')),
+          ),
+        ),
       );
 
       return h(
@@ -1203,14 +1321,14 @@ window.__ModuleLoader__.load({
       return currentModel === null && state.current !== null && state.current !== undefined;
     }
 
-    const inject = ['locale', 'slots', 'modelDirectories', 'sessions'];
+    const inject = ['locale', 'slots', 'modelDirectories', 'sessions', 'shortcuts'];
 
     /**
      * Mount the replacement seat over the shipped per-session model directory.
      * @param ctx - client root context.
      */
     function apply(ctx) {
-      ctx.inject(['locale', 'slots', 'modelDirectories', 'sessions'], (scope) => {
+      ctx.inject(['locale', 'slots', 'modelDirectories', 'sessions', 'shortcuts'], (scope) => {
         scope.effect(() => scope.locale.register(NS, { zh, en }), 'effort-menu: dictionaries');
         const models = scope.modelDirectories;
         const sessions = scope.sessions;
@@ -1231,6 +1349,7 @@ window.__ModuleLoader__.load({
                   },
                   resolveText: (text) => scope.locale.resolveText(text),
                   select: (selection) => (available ? directory.select(selection) : Promise.resolve(undefined)),
+                  manageModels: () => openModelsSettings(scope),
                 };
               },
             },
