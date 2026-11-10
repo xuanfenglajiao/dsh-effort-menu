@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0
+
+- The all-models flyout ends with a *Manage models* row, separated by a divider; it opens Settings → Models directly.
+
 ## 1.0.1
 
 Documentation only. The published README now states the supported DSH version, the npm install command, and the correct desktop install steps.
