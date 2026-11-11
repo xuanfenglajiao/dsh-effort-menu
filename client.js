@@ -23,6 +23,9 @@ window.__ModuleLoader__.load({
       'menu.allModels': '全部模型',
       'menu.effort': '思考强度',
       'menu.manageModels': '管理模型',
+      'menu.searchModels': '搜索模型',
+      'menu.noMatches': '没有符合条件的模型',
+      'menu.closeAll': '收起全部模型',
       'provider.account': 'DeepSeek 账号',
       'trigger.fallback': '请选择模型',
       'trigger.selectAria': '请选择模型',
@@ -46,6 +49,9 @@ window.__ModuleLoader__.load({
       'menu.allModels': 'All models',
       'menu.effort': 'Thinking intensity',
       'menu.manageModels': 'Manage models',
+      'menu.searchModels': 'Search models',
+      'menu.noMatches': 'No models match your search',
+      'menu.closeAll': 'Close all models',
       'provider.account': 'DeepSeek Account',
       'trigger.fallback': 'Select model',
       'trigger.selectAria': 'Select model',
@@ -64,8 +70,8 @@ window.__ModuleLoader__.load({
 
     const CSS = `
 .es-root,.es-root *{corner-shape:round}
-.es-root{min-width:0;position:relative;font-size:var(--dsh-content-font-size,13px)}
-.es-trigger{border-radius:var(--dsw-radius-sm);min-width:0;max-width:360px;height:calc(28px + var(--dsh-content-font-delta,0px));color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:none;outline:none;align-items:center;gap:4px;padding:0 4px 0 8px;font-size:var(--dsh-content-font-size,13px);font-weight:400;line-height:calc(20px + var(--dsh-content-font-delta,0px));display:flex}
+.es-root{min-width:0;position:relative;--es-font:calc(var(--dsh-content-font-size,13px) - 1px);--es-line:calc(18px + var(--dsh-content-font-delta,0px));--es-small:calc(10px + var(--dsh-content-font-delta-secondary,0px));font-size:var(--es-font)}
+.es-trigger{border-radius:var(--dsw-radius-sm);min-width:0;max-width:360px;height:calc(28px + var(--dsh-content-font-delta,0px));color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:none;outline:none;align-items:center;gap:4px;padding:0 4px 0 8px;font-size:var(--dsh-content-font-size,13px);font-weight:400;line-height:var(--es-line);display:flex}
 @media (hover:hover){.es-trigger:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}}
 .es-trigger:focus-visible{box-shadow:0 0 0 2px var(--dsw-focus-ring-color,var(--dsw-alias-brand-primary))}
 .es-trigger:disabled{color:var(--dsw-alias-label-dimmed);cursor:default}
@@ -76,46 +82,56 @@ window.__ModuleLoader__.load({
 .es-chevronOpen{transform:rotate(180deg)}
 .es-spinner{width:14px;height:14px;flex:none;border-radius:50%;border:1.5px solid var(--dsw-alias-label-caption,var(--dsw-alias-label-secondary));border-top-color:transparent;animation:es-spin .8s linear infinite}
 @keyframes es-spin{to{transform:rotate(360deg)}}
-.es-menu{box-sizing:border-box;position:fixed;z-index:1100;width:300px;max-width:calc(100vw - 24px);max-height:min(480px,calc(100vh - 96px));display:flex;flex-direction:column;padding:5px 8px 10px;border-radius:12px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-specific-input-major,var(--dsw-alias-bg-overlay));box-shadow:var(--dsw-elevation-prominent,0 18px 48px rgba(0,0,0,.45));color:var(--dsw-alias-label-primary);font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px));overflow:hidden}
+.es-menu{box-sizing:border-box;position:fixed;z-index:1100;width:300px;max-width:calc(100vw - 24px);max-height:min(480px,calc(100vh - 96px));display:flex;flex-direction:column;padding:5px 8px 10px;border-radius:12px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-specific-input-major,var(--dsw-alias-bg-overlay));box-shadow:var(--dsw-elevation-prominent,0 18px 48px rgba(0,0,0,.45));color:var(--dsw-alias-label-primary);font-size:var(--es-font);line-height:var(--es-line);overflow:hidden}
 .es-menu:focus{outline:none}
 .es-modelSection{display:flex;flex-direction:column;min-height:0;max-height:300px;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;padding:2px 0 0}
-.es-provider{box-sizing:border-box;width:100%;height:calc(42px + var(--dsh-content-font-delta,0px));display:flex;align-items:center;gap:8px;padding:0 8px;margin:0;border:0;border-radius:9px;background:0 0;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none;flex:none;transition:background-color .16s ease}
+.es-provider{box-sizing:border-box;width:100%;height:calc(32px + var(--dsh-content-font-delta,0px));display:flex;align-items:center;gap:8px;padding:0 8px;margin:0;border:0;border-radius:9px;background:0 0;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none;flex:none;transition:background-color .16s ease}
 .es-provider:disabled{cursor:default}
 .es-provider:focus-visible,.es-provider.es-providerOpen{background:var(--dsw-alias-interactive-bg-hover)}
 @media (hover:hover){.es-provider:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}}
 .es-providerDivider{flex:none;height:1px;margin:4px 0 0;background:var(--dsw-alias-border-l1)}
-.es-providerName{flex:1;min-width:0;font-size:var(--dsh-content-font-size,13px);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.es-providerBadge{flex:none;font-size:calc(10px + var(--dsh-content-font-delta-secondary,0px));line-height:16px;padding:0 5px;border-radius:4px;border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));letter-spacing:.02em}
+.es-providerName{flex:1;min-width:0;font-size:var(--es-font);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.es-providerBadge{flex:none;font-size:calc(9px + var(--dsh-content-font-delta-secondary,0px));line-height:16px;padding:0 5px;border-radius:4px;border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));letter-spacing:.02em}
 .es-providerChevron{width:14px;height:14px;flex:none;color:var(--dsw-alias-label-caption,var(--dsw-alias-label-secondary));transition:transform .18s ease}
-.es-flyout{box-sizing:border-box;position:fixed;z-index:1101;width:280px;max-width:calc(100vw - 24px);max-height:min(480px,calc(100vh - 24px));display:flex;flex-direction:column;padding:6px;border-radius:12px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-specific-input-major,var(--dsw-alias-bg-overlay));box-shadow:var(--dsw-elevation-prominent,0 18px 48px rgba(0,0,0,.45));color:var(--dsw-alias-label-primary);font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px));overflow:hidden}
+.es-flyout{box-sizing:border-box;position:fixed;z-index:1101;width:280px;max-width:calc(100vw - 24px);max-height:min(480px,calc(100vh - 24px));display:flex;flex-direction:column;padding:6px;border-radius:12px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-specific-input-major,var(--dsw-alias-bg-overlay));box-shadow:var(--dsw-elevation-prominent,0 18px 48px rgba(0,0,0,.45));color:var(--dsw-alias-label-primary);font-size:var(--es-font);line-height:var(--es-line);overflow:hidden}
 .es-flyout:focus{outline:none}
+.es-search{flex:none;display:flex;align-items:center;gap:8px;box-sizing:border-box;min-height:calc(34px + var(--dsh-content-font-delta,0px));margin:0;padding:4px 4px 8px;border:0;border-radius:0;border-bottom:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-primary)}
+
+.es-searchIcon{flex:none;width:15px;height:15px;color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-tertiary))}
+.es-searchInput{flex:1;min-width:0;border:0;outline:none;background:transparent;box-shadow:none;color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-tertiary));caret-color:var(--dsw-alias-label-primary);font:inherit;font-size:var(--es-font);line-height:var(--es-line);padding:0}
+.es-searchInput::placeholder{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));opacity:1}
+.es-search:focus-within .es-searchInput{color:var(--dsw-alias-label-primary)}
+.es-searchClose{flex:none;display:grid;place-items:center;width:22px;height:22px;margin:0 -2px 0 0;padding:0;border:0;border-radius:999px;background:0 0;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));cursor:pointer;outline:none}
+@media (hover:hover){.es-searchClose:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}}
+.es-searchClose:focus-visible{box-shadow:0 0 0 2px var(--dsw-focus-ring-color,var(--dsw-alias-brand-primary))}
+.es-noMatches{flex:none;padding:10px 8px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));font-size:var(--es-small);line-height:16px;text-align:center}
 .es-flyoutList{display:flex;flex-direction:column;min-height:0;flex:1;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
-.es-sectionLabel{flex:none;padding:7px 8px 3px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));font-size:calc(11px + var(--dsh-content-font-delta-secondary,0px));line-height:16px;font-weight:500}
+.es-sectionLabel{flex:none;padding:7px 8px 3px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));font-size:var(--es-small);line-height:16px;font-weight:500}
 .es-modelGroup{display:flex;flex-direction:column}
-.es-groupHeading{flex:none;padding:6px 8px 2px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));font-size:calc(11px + var(--dsh-content-font-delta-secondary,0px));line-height:16px;font-weight:500}
-.es-modelRow{box-sizing:border-box;width:100%;min-height:calc(36px + var(--dsh-content-font-delta,0px));display:flex;align-items:center;gap:7px;padding:7px 8px;border:0;border-radius:8px;background:0 0;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none;transition:background-color .16s ease}
+.es-groupHeading{flex:none;padding:6px 8px 2px;color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));font-size:var(--es-small);line-height:16px;font-weight:500}
+.es-modelRow{box-sizing:border-box;width:100%;min-height:calc(32px + var(--dsh-content-font-delta,0px));display:flex;align-items:center;gap:7px;padding:5px 8px;border:0;border-radius:8px;background:0 0;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none;transition:background-color .16s ease}
 .es-modelRowSelected{background:transparent}
 @media (hover:hover){.es-modelRow:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}}
 .es-modelRow:focus-visible{background:var(--dsw-alias-interactive-bg-hover);box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l2)}
 .es-modelRow:disabled{color:var(--dsw-alias-label-dimmed);cursor:default}
-.es-modelName{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px))}
+.es-modelName{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--es-font);line-height:var(--es-line)}
 .es-modelLabel{display:inline;min-width:0}
-.es-modelBadge{flex:none;font-size:calc(10px + var(--dsh-content-font-delta-secondary,0px));line-height:16px;padding:0 5px;border-radius:5px;background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary);border:1px solid var(--dsw-alias-border-l1)}
+.es-modelBadge{flex:none;font-size:calc(9px + var(--dsh-content-font-delta-secondary,0px));line-height:16px;padding:0 5px;border-radius:5px;background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary);border:1px solid var(--dsw-alias-border-l1)}
 .es-check{flex:0 0 14px;display:grid;place-items:center;color:var(--dsw-alias-label-primary)}
 .es-effortDivider{border-top:1px solid var(--dsw-alias-border-l1);margin:8px 0 0;flex:none}
 .es-effortBlock{padding:8px 2px 2px;border-radius:10px;flex:none}
 .es-footerDivider{border-top:1px solid var(--dsw-alias-border-l1);margin:8px 0 0;flex:none}
 .es-footer{padding:4px 0 0;flex:none}
-.es-manageRow{box-sizing:border-box;width:100%;height:calc(36px + var(--dsh-content-font-delta,0px));display:flex;align-items:center;gap:8px;padding:0 8px;margin:0;border:0;border-radius:8px;background:0 0;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none;transition:background-color .16s ease}
+.es-manageRow{box-sizing:border-box;width:100%;height:calc(32px + var(--dsh-content-font-delta,0px));display:flex;align-items:center;gap:8px;padding:0 8px;margin:0;border:0;border-radius:8px;background:0 0;color:inherit;font:inherit;text-align:left;cursor:pointer;outline:none;transition:background-color .16s ease}
 @media (hover:hover){.es-manageRow:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}}
 .es-manageRow:focus-visible{background:var(--dsw-alias-interactive-bg-hover);box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l2)}
 .es-manageRow:disabled{color:var(--dsw-alias-label-dimmed);cursor:default}
-.es-manageLabel{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px))}
+.es-manageLabel{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--es-font);line-height:var(--es-line)}
 .es-effortHeader{display:flex;align-items:center;gap:8px;padding:2px 6px 0}
-.es-effortLabel{color:var(--dsw-alias-label-primary);flex:none;font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px))}
-.es-effortValue{color:var(--dsw-alias-label-primary);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--dsh-content-font-size,13px);line-height:calc(20px + var(--dsh-content-font-delta,0px))}
-.es-track{--es-knob:24px;--es-ease:cubic-bezier(.32,.72,0,1);--es-dur:.46s;position:relative;box-sizing:border-box;height:var(--es-knob);margin:10px 6px 2px;border-radius:999px;corner-shape:round;cursor:pointer;touch-action:none;outline:none;isolation:isolate;background:transparent}
-.es-track.es-dragging{--es-dur:.34s}
+.es-effortLabel{color:var(--dsw-alias-label-primary);flex:none;font-size:var(--es-font);line-height:var(--es-line)}
+.es-effortValue{color:var(--dsw-alias-label-primary);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--es-font);line-height:var(--es-line)}
+.es-track{--es-knob:24px;--es-ease:cubic-bezier(.22,1,.36,1);--es-dur:.58s;position:relative;box-sizing:border-box;height:var(--es-knob);margin:10px 6px 2px;border-radius:999px;corner-shape:round;cursor:pointer;touch-action:none;outline:none;isolation:isolate;background:transparent}
+.es-track.es-dragging{--es-dur:.38s;--es-ease:cubic-bezier(.28,.84,.32,1)}
 .es-rail{position:absolute;inset:0;border-radius:999px;corner-shape:round;overflow:hidden;pointer-events:none;container-type:inline-size;background:var(--dsw-alias-interactive-bg-hover,rgba(120,130,145,.24));box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l1)}
 .es-track:hover:not(.es-disabled) .es-rail{filter:brightness(1.04)}
 .es-track:focus-visible .es-rail{box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l1),0 0 0 2px var(--dsw-focus-ring-color,var(--dsw-alias-brand-primary))}
@@ -130,15 +146,15 @@ window.__ModuleLoader__.load({
 .es-dotHover{transform:translate(-50%,-50%) scale(1.35)}
 .es-steps{position:absolute;inset:0;z-index:1;pointer-events:none}
 .es-step{position:absolute;top:50%;box-sizing:border-box;width:14px;height:14px;padding:0;border:0;border-radius:0;-webkit-appearance:none;appearance:none;transform:translate(-50%,-50%);background:transparent;cursor:pointer;pointer-events:auto;outline:none}
-.es-knob{position:absolute;top:50%;z-index:2;display:block;width:var(--es-knob);height:var(--es-knob);transform:translate(-50%,-50%);transition:left var(--es-dur) var(--es-ease),filter .18s ease;will-change:left;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
+.es-knob{position:absolute;top:50%;z-index:2;display:block;width:var(--es-knob);height:var(--es-knob);transform:translate(-50%,-50%);transition:left var(--es-dur) var(--es-ease),filter .22s ease;will-change:left;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
 .es-knob svg{display:block;width:100%;height:100%;pointer-events:none}
 .es-track:hover:not(.es-disabled) .es-knob{filter:drop-shadow(0 1px 4px rgba(0,0,0,.5))}
 .es-track.es-dragging .es-knob{filter:drop-shadow(0 2px 6px rgba(0,0,0,.55))}
 .es-track.es-dragging .es-sparkles,.es-track.es-dragging .es-shine{animation:none}
-.es-effortEmpty{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));padding:2px 6px 0;font-size:calc(12px + var(--dsh-content-font-delta-secondary,0px));line-height:18px}
-.es-status{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));padding:8px;font-size:calc(12px + var(--dsh-content-font-delta-secondary,0px));line-height:18px}
+.es-effortEmpty{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));padding:2px 6px 0;font-size:calc(11px + var(--dsh-content-font-delta-secondary,0px));line-height:18px}
+.es-status{color:var(--dsw-alias-label-tertiary,var(--dsw-alias-label-secondary));padding:8px;font-size:calc(11px + var(--dsh-content-font-delta-secondary,0px));line-height:18px}
 .es-alerts{display:flex;flex-direction:column;gap:4px;padding:4px 2px 2px;flex:none}
-.es-error,.es-warning{display:flex;align-items:flex-start;gap:8px;margin:0;padding:6px 8px;border-radius:8px;font-size:calc(11px + var(--dsh-content-font-delta-secondary,0px));line-height:16px}
+.es-error,.es-warning{display:flex;align-items:flex-start;gap:8px;margin:0;padding:6px 8px;border-radius:8px;font-size:var(--es-small);line-height:16px}
 .es-error{background:var(--dsw-alias-interactive-bg-hover-danger,rgba(220,38,38,.12));color:var(--dsw-alias-state-error-primary)}
 .es-warning{background:var(--dsw-alias-interactive-bg-hover-warning,rgba(245,158,11,.12));color:var(--dsw-alias-state-warn-primary)}
 .es-errorText{min-width:0;overflow-wrap:anywhere}
@@ -198,6 +214,43 @@ window.__ModuleLoader__.load({
           'aria-hidden': true,
         },
         h('path', { d: 'M2.25 8.5L5.49732 11.7473C5.90519 12.1552 6.57263 12.1344 6.95426 11.7018L13.75 4' }),
+      );
+    }
+
+    /** Magnifier used by the all-models search field. */
+    function searchIcon({ className, size } = {}) {
+      return h(
+        'svg',
+        {
+          className,
+          width: size || 14,
+          height: size || 14,
+          viewBox: '0 0 16 16',
+          fill: 'none',
+          stroke: 'currentColor',
+          strokeWidth: 1,
+          'aria-hidden': true,
+        },
+        h('circle', { cx: 7, cy: 7, r: 4.25 }),
+        h('path', { d: 'M10.25 10.25L13.75 13.75' }),
+      );
+    }
+
+    /** Close glyph for the all-models flyout header. */
+    function closeIcon({ className, size } = {}) {
+      return h(
+        'svg',
+        {
+          className,
+          width: size || 12,
+          height: size || 12,
+          viewBox: '0 0 16 16',
+          fill: 'none',
+          stroke: 'currentColor',
+          strokeWidth: 1,
+          'aria-hidden': true,
+        },
+        h('path', { d: 'M4 4L12 12M12 4L4 12' }),
       );
     }
 
@@ -478,22 +531,24 @@ window.__ModuleLoader__.load({
         return { f, knob, perLevel: span / last };
       };
 
-      /** Dragging: the nearest node, so the level changes exactly when the pointer passes a midpoint. */
-      const nearestLevel = (clientX) => Math.round(measure(clientX).f);
-
-      /**
-       * Pressing without dragging: the nearest node, except that a press beside the knob (not on
-       * it) steps one level toward the pointer. Otherwise the half of a gap nearest the current
-       * node would do nothing at all.
-       */
-      const pressedLevel = (clientX) => {
-        const { f, knob, perLevel } = measure(clientX);
-        const nearest = Math.round(f);
-        if (nearest !== committed) return nearest;
-        const offset = (f - committed) * perLevel;
-        if (Math.abs(offset) <= knob / 2) return committed;
-        return Math.min(last, Math.max(0, committed + (offset > 0 ? 1 : -1)));
+      /** Map a fractional pointer position onto a level using midpoint boundaries. */
+      const levelFromPosition = (f) => {
+        if (last === 0) return 0;
+        const clamped = Math.min(last, Math.max(0, f));
+        let idx = 0;
+        while (idx < last) {
+          const boundary = (idx + 0.5) / last;
+          if (clamped < boundary) return idx;
+          idx += 1;
+        }
+        return last;
       };
+
+      /** Dragging: jump only when the pointer crosses the midpoint between nodes. */
+      const nearestLevel = (clientX) => levelFromPosition(measure(clientX).f);
+
+      /** Pressing without dragging: choose the level by midpoint zones only. */
+      const pressedLevel = (clientX) => levelFromPosition(measure(clientX).f);
 
       /** Send levels one at a time; a click made while one is in flight replaces any queued one. */
       const run = (next) => {
@@ -665,6 +720,34 @@ window.__ModuleLoader__.load({
       return [...groups].sort((left, right) => rank(left) - rank(right));
     }
 
+    /** Split a search-box value into lowercase terms; an empty list means "show everything". */
+    function modelQueryTerms(query) {
+      return String(query).trim().toLowerCase().split(/\s+/).filter((term) => term !== '');
+    }
+
+    /**
+     * Fuzzy match a model against the search terms: every term must appear as a
+     * substring of the name/id, or as an in-order run of characters in the name
+     * (so "dv4" still finds "deepseek-v4-flash"). Provider names are deliberately
+     * not searched — the filter is about model names, while provider headings are
+     * kept for whichever groups still have matches.
+     */
+    function modelMatchesQuery(model, terms) {
+      if (terms.length === 0) return true;
+      const name = typeof model.name === 'string' ? model.name.toLowerCase() : '';
+      const id = typeof model.id === 'string' ? model.id.toLowerCase() : '';
+      const literal = name + ' ' + id;
+      return terms.every((term) => {
+        if (literal.indexOf(term) !== -1) return true;
+        if (term.length < 2) return false;
+        let at = 0;
+        for (let i = 0; i < name.length && at < term.length; i += 1) {
+          if (name.charCodeAt(i) === term.charCodeAt(at)) at += 1;
+        }
+        return at === term.length;
+      });
+    }
+
     /** Localized provider name; the account provider's catalog name is not translated by the Host. */
     function providerDisplayName(group, t) {
       if (group === undefined || group === null) return '';
@@ -688,6 +771,8 @@ window.__ModuleLoader__.load({
       // True while the all-models flyout is shown to the right of the menu.
       const [showAll, setShowAll] = React.useState(false);
       const [flyoutPos, setFlyoutPos] = React.useState(null);
+      // The all-models search box filters its list by model name; provider headings survive.
+      const [query, setQuery] = React.useState('');
       const [recent, setRecent] = React.useState(() => readRecentModels());
       // True while an effort level is being saved. The directory reports that as `pending` too, but
       // only the effort block should react to it, not the model rows or the trigger.
@@ -697,7 +782,7 @@ window.__ModuleLoader__.load({
       const menuRef = React.useRef(null);
       const flyoutRef = React.useRef(null);
       const providerRef = React.useRef(null);
-      const hoverTimerRef = React.useRef(null);
+      const searchRef = React.useRef(null);
       const focusFlyoutRef = React.useRef(false);
       // A failure can come from a catalog load or from a selection; only the former belongs to
       // `state.error`'s catalog alert, while selection failures render from local `error`.
@@ -777,44 +862,43 @@ window.__ModuleLoader__.load({
         if (knownEffort !== undefined) writeLastEffort(knownEffort);
       }, [knownEffort]);
 
+      // The search belongs to the all-models list, so a fresh list always starts with a fresh query.
+      React.useEffect(() => {
+        if (!showAll) setQuery('');
+      }, [showAll]);
+
+      const focusInsideModelsPopover = (target) => {
+        if (!(target instanceof Node)) return false;
+        if (menuRef.current !== null && menuRef.current.contains(target)) return true;
+        if (flyoutRef.current !== null && flyoutRef.current.contains(target)) return true;
+        return false;
+      };
+
       React.useEffect(() => {
         if (!open) return undefined;
         const onMouseDown = (event) => {
           if (rootRef.current !== null && rootRef.current.contains(event.target)) return;
-          if (menuRef.current !== null && menuRef.current.contains(event.target)) return;
-          if (flyoutRef.current !== null && flyoutRef.current.contains(event.target)) return;
+          if (focusInsideModelsPopover(event.target)) return;
           close(false);
         };
         document.addEventListener('mousedown', onMouseDown);
         return () => document.removeEventListener('mousedown', onMouseDown);
       }, [open]);
 
-      // Escape works wherever focus is, not only while it stays inside the seat; a focus move
-      // outside the seat also closes the floating menu so it cannot outlive its trigger.
+      // Dismiss only on outside click or Escape — never on focus moving to the page background while
+      // the menu is open (that was closing the all-models list as soon as the pointer left).
       React.useEffect(() => {
         if (!open) return undefined;
         const onKeyDown = (event) => {
           if (event.key !== 'Escape') return;
           const target = event.target;
           if (rootRef.current !== null && rootRef.current.contains(target)) return;
-          if (menuRef.current !== null && menuRef.current.contains(target)) return;
-          if (flyoutRef.current !== null && flyoutRef.current.contains(target)) return;
+          if (focusInsideModelsPopover(target)) return;
           event.preventDefault();
           close(false);
         };
-        const onFocusIn = (event) => {
-          const target = event.target;
-          if (rootRef.current !== null && rootRef.current.contains(target)) return;
-          if (menuRef.current !== null && menuRef.current.contains(target)) return;
-          if (flyoutRef.current !== null && flyoutRef.current.contains(target)) return;
-          close(false);
-        };
         document.addEventListener('keydown', onKeyDown, true);
-        document.addEventListener('focusin', onFocusIn, true);
-        return () => {
-          document.removeEventListener('keydown', onKeyDown, true);
-          document.removeEventListener('focusin', onFocusIn, true);
-        };
+        return () => document.removeEventListener('keydown', onKeyDown, true);
       }, [open]);
 
       // The menu is anchored by the edge facing the trigger (its bottom edge when it opens upward),
@@ -903,48 +987,33 @@ window.__ModuleLoader__.load({
         if (typeof window.ResizeObserver === 'function' && menuRef.current !== null) {
           observer = new window.ResizeObserver(placeFlyout);
           observer.observe(menuRef.current);
+          // Filtering the list changes the flyout's height; keep its top inside the viewport.
+          if (flyoutRef.current !== null) observer.observe(flyoutRef.current);
         }
         return () => {
           window.removeEventListener('resize', placeFlyout);
           window.removeEventListener('scroll', placeFlyout, true);
           if (observer !== null) observer.disconnect();
         };
-      }, [open, showAll, position, groups.length, menuShape]);
+      }, [open, showAll, position, groups.length, menuShape, query]);
 
-      // Keyboard users open the flyout with ArrowRight; move focus into it once it is visible.
+      // Keyboard users open the flyout with ArrowRight; put the caret in its search field.
       React.useEffect(() => {
         if (flyoutPos === null || !focusFlyoutRef.current || flyoutRef.current === null) return;
         focusFlyoutRef.current = false;
-        const target = flyoutRef.current.querySelector('.es-modelRow[aria-checked="true"]') || flyoutRef.current.querySelector('.es-modelRow');
+        const target =
+          flyoutRef.current.querySelector('.es-searchInput') ||
+          flyoutRef.current.querySelector('.es-modelRow[aria-checked="true"]') ||
+          flyoutRef.current.querySelector('.es-modelRow');
         if (target !== null) target.focus({ preventScroll: true });
       }, [flyoutPos]);
 
-      React.useEffect(
-        () => () => {
-          if (hoverTimerRef.current !== null) window.clearTimeout(hoverTimerRef.current);
-        },
-        [],
-      );
-
       if (!available) return null;
 
-      const cancelFlyoutClose = () => {
-        if (hoverTimerRef.current === null) return;
-        window.clearTimeout(hoverTimerRef.current);
-        hoverTimerRef.current = null;
-      };
+      /** Open the all-models flyout; it stays until the user dismisses it explicitly. */
       const openFlyout = () => {
         if (locked) return;
-        cancelFlyoutClose();
         setShowAll(true);
-      };
-      // A short delay lets the pointer cross the gap between the provider row and the flyout.
-      const scheduleFlyoutClose = () => {
-        cancelFlyoutClose();
-        hoverTimerRef.current = window.setTimeout(() => {
-          hoverTimerRef.current = null;
-          setShowAll(false);
-        }, 160);
       };
 
       /** Resolves true when the level was saved, so the slider knows whether to keep it. */
@@ -978,9 +1047,9 @@ window.__ModuleLoader__.load({
       };
 
       /**
-       * Switch model and leave the menu open. The effort level in use carries over when the new
-       * model offers it, otherwise the new model's highest level is requested. The host would
-       * otherwise reset it to the model's own default.
+       * Switch model and leave every popover open; they close only on an outside click, Escape or
+       * the flyout's close button. The effort level in use carries over when the new model offers
+       * it, otherwise the new model's highest level is requested.
        */
       const chooseModel = (group, model) => {
         if (busy || locked) return;
@@ -1104,17 +1173,25 @@ window.__ModuleLoader__.load({
         visibleEntries = [{ group: currentGroup, model: currentModel }, ...visibleEntries].slice(0, RECENT_VISIBLE);
       }
       const recentRows = visibleEntries.map((entry) => renderModelRow(entry.group, entry.model, 'recent'));
+      // Search filters the all-models list only. Each surviving group keeps its provider heading,
+      // so a result always says which provider it came from.
+      const queryTerms = modelQueryTerms(query);
+      const matchingGroups = groups
+        .map((group) => ({ group, models: group.models.filter((model) => modelMatchesQuery(model, queryTerms)) }))
+        .filter((entry) => entry.models.length > 0);
       const allGroups =
         groups.length === 0
           ? h('div', { className: 'es-status' }, state.status === 'loading' ? t('status.loading') : t('empty.groups'))
-          : groups.map((group) =>
-              h(
-                'div',
-                { key: group.id, className: 'es-modelGroup' },
-                h('div', { className: 'es-groupHeading' }, providerDisplayName(group, t)),
-                group.models.map((model) => renderModelRow(group, model, 'all')),
-              ),
-            );
+          : matchingGroups.length === 0
+            ? h('div', { className: 'es-noMatches' }, queryTerms.length === 0 ? t('empty.groups') : t('menu.noMatches'))
+            : matchingGroups.map((entry) =>
+                h(
+                  'div',
+                  { key: entry.group.id, className: 'es-modelGroup' },
+                  h('div', { className: 'es-groupHeading' }, providerDisplayName(entry.group, t)),
+                  entry.models.map((model) => renderModelRow(entry.group, model, 'all')),
+                ),
+              );
       const modelContent =
         recentRows.length > 0
           ? recentRows
@@ -1122,6 +1199,11 @@ window.__ModuleLoader__.load({
             ? h('div', { className: 'es-status' }, state.status === 'loading' ? t('status.loading') : t('empty.groups'))
             : activeGroup.models.map((model) => renderModelRow(activeGroup, model, 'active'));
       const sectionLabel = recentRows.length > 0 ? t('menu.recent') : t('menu.model');
+
+      const closeAllModelsFlyout = () => {
+        setShowAll(false);
+        if (providerRef.current !== null) providerRef.current.focus({ preventScroll: true });
+      };
 
       const providerRow = h(
         'button',
@@ -1134,7 +1216,6 @@ window.__ModuleLoader__.load({
           disabled: locked,
           title: activeGroup === null ? undefined : providerDisplayName(activeGroup, t),
           onMouseEnter: openFlyout,
-          onMouseLeave: scheduleFlyoutClose,
           onClick: openFlyout,
           onKeyDown: (event) => {
             if (event.key !== 'ArrowRight') return;
@@ -1221,7 +1302,7 @@ window.__ModuleLoader__.load({
           onKeyDown: (event) => {
             if (event.key === 'Escape') {
               event.preventDefault();
-              if (showAll) setShowAll(false);
+              if (showAll) closeAllModelsFlyout();
               else close();
               return;
             }
@@ -1249,18 +1330,18 @@ window.__ModuleLoader__.load({
           role: 'menu',
           'aria-label': t('menu.allModels'),
           style: flyoutPos === null ? { left: 0, top: 0, visibility: 'hidden' } : { left: flyoutPos.left, top: flyoutPos.top },
-          onMouseEnter: cancelFlyoutClose,
-          onMouseLeave: scheduleFlyoutClose,
           onKeyDown: (event) => {
-            if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+            const inSearch = event.target instanceof Element && event.target.closest('.es-search') !== null;
+            if (event.key === 'Escape' || (event.key === 'ArrowLeft' && !inSearch)) {
               event.preventDefault();
               event.stopPropagation();
-              setShowAll(false);
-              if (providerRef.current !== null) providerRef.current.focus({ preventScroll: true });
+              closeAllModelsFlyout();
               return;
             }
             if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-            const rows = Array.from(event.currentTarget.querySelectorAll('.es-modelRow, .es-manageRow')).filter((row) => !row.disabled);
+            // ArrowUp from the search field is left to the input itself.
+            if (inSearch && event.key === 'ArrowUp') return;
+            const rows = Array.from(event.currentTarget.querySelectorAll('.es-searchInput, .es-searchClose, .es-modelRow, .es-manageRow')).filter((row) => !row.disabled);
             if (rows.length === 0) return;
             event.preventDefault();
             const at = rows.indexOf(document.activeElement);
@@ -1269,6 +1350,41 @@ window.__ModuleLoader__.load({
             rows[next].focus();
           },
         },
+        h(
+          'div',
+          { className: 'es-search', role: 'search' },
+          h(searchIcon, { className: 'es-searchIcon' }),
+          h('input', {
+            ref: searchRef,
+            type: 'text',
+            className: 'es-searchInput',
+            value: query,
+            placeholder: t('menu.searchModels'),
+            'aria-label': t('menu.searchModels'),
+            autoComplete: 'off',
+            spellCheck: false,
+            onChange: (event) => setQuery(event.target.value),
+            onKeyDown: (event) => {
+              // First Escape clears the filter; a second one closes the all-models list.
+              if (event.key !== 'Escape') return;
+              event.preventDefault();
+              event.stopPropagation();
+              if (query !== '') setQuery('');
+              else closeAllModelsFlyout();
+            },
+          }),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'es-searchClose',
+              'aria-label': t('menu.closeAll'),
+              title: t('menu.closeAll'),
+              onClick: closeAllModelsFlyout,
+            },
+            h(closeIcon, {}),
+          ),
+        ),
         h('div', { className: 'es-flyoutList' }, allGroups),
         h('div', { className: 'es-footerDivider' }),
         h(
@@ -1298,7 +1414,7 @@ window.__ModuleLoader__.load({
             if (!open) return;
             if (event.key === 'Escape') {
               event.preventDefault();
-              if (showAll) setShowAll(false);
+              if (showAll) closeAllModelsFlyout();
               else close();
               return;
             }
