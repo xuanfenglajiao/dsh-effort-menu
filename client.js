@@ -531,17 +531,15 @@ window.__ModuleLoader__.load({
         return { f, knob, perLevel: span / last };
       };
 
-      /** Map a fractional pointer position onto a level using midpoint boundaries. */
+      /**
+       * Map a fractional pointer position onto a level using midpoint boundaries.
+       * `f` is in level units (0..last), so the boundary between idx and idx + 1 is
+       * simply idx + 0.5.
+       */
       const levelFromPosition = (f) => {
         if (last === 0) return 0;
         const clamped = Math.min(last, Math.max(0, f));
-        let idx = 0;
-        while (idx < last) {
-          const boundary = (idx + 0.5) / last;
-          if (clamped < boundary) return idx;
-          idx += 1;
-        }
-        return last;
+        return Math.min(last, Math.floor(clamped + 0.5));
       };
 
       /** Dragging: jump only when the pointer crosses the midpoint between nodes. */
