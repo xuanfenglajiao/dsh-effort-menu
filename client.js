@@ -461,6 +461,128 @@ window.__ModuleLoader__.load({
       return undefined;
     }
 
+    /** Shallow compare two records by own enumerable keys. */
+    function sameRecordShallow(a, b) {
+      if (a === b) return true;
+      if (a === null || a === undefined || b === null || b === undefined) return false;
+      const keysA = Object.keys(a);
+      const keysB = Object.keys(b);
+      if (keysA.length !== keysB.length) return false;
+      for (const key of keysA) {
+        if (a[key] !== b[key]) return false;
+      }
+      return true;
+    }
+
+    /**
+     * Two catalog payloads count as equal when every entry compares shallowly equal, so a
+     * store rebuild that reuses the same model objects (the snapshot store does) or the
+     * same group objects still counts as "content unchanged".
+     */
+    function sameArrayShallow(a, b) {
+      if (a === b) return true;
+      if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i += 1) {
+        const left = a[i];
+        const right = b[i];
+        if (left === right) continue;
+        if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') return false;
+        if (!sameRecordShallow(left, right)) return false;
+      }
+      return true;
+    }
+
+    /**
+     * True when two directory snapshots differ only in select() bookkeeping (`status` /
+     * `pending`), in the success direction: `selecting` with a pending selection, or
+     * `ready` after it. Saving an effort level publishes exactly that pair around the
+     * committed level. Folding it saves the seat one render per bookkeeping step. It does not
+     * keep the model rows still on its own: the shell can publish `pending` together with the
+     * new level, and that snapshot must be delivered, so the rows ignore an effort-only
+     * `pending` instead (see `effortOnlyPending` in EffortSeat).
+     *
+     * Two guardrails:
+     * - A failure snapshot is never churn: `error` status on either side, or a non-empty
+     *   `error` on the incoming snapshot, must be delivered so the failure stays visible.
+     * - `current` may change ONLY by `reasoningEffort`: the shell can write the new level
+     *   before clearing `pending`, so the commit step also compares as churn. The coalescer
+     *   then takes the new raw as its view (see below), so the slider never falls back.
+     */
+    function isEffortChurn(a, b) {
+      if (a === b) return true;
+      if (a === null || a === undefined || b === null || b === undefined || typeof a !== 'object' || typeof b !== 'object') return false;
+      if (a.status === 'error' || b.status === 'error') return false;
+      if (b.error !== null && b.error !== undefined && b.error !== '') return false;
+      const currentA = a.current;
+      const currentB = b.current;
+      if (currentA === null || currentA === undefined || currentB === null || currentB === undefined) {
+        if (currentA !== currentB) return false;
+      } else {
+        const keysA = Object.keys(currentA);
+        const keysB = Object.keys(currentB);
+        if (keysA.length !== keysB.length) return false;
+        for (const key of keysA) {
+          if (key === 'reasoningEffort') continue;
+          if (currentA[key] !== currentB[key]) return false;
+        }
+      }
+      const keys = {};
+      for (const key of Object.keys(a)) keys[key] = true;
+      for (const key of Object.keys(b)) keys[key] = true;
+      for (const key of Object.keys(keys)) {
+        if (key === 'status' || key === 'pending' || key === 'current') continue;
+        const left = a[key];
+        const right = b[key];
+        if (left === right) continue;
+        if (Array.isArray(left) || Array.isArray(right)) {
+          if (!sameArrayShallow(left, right)) return false;
+          continue;
+        }
+        if (left !== right) return false;
+      }
+      return true;
+    }
+
+    /**
+     * Coalesce a directory's snapshot stream for the seat: while an effort save is in
+     * flight (`isFlightActive`), bookkeeping-only updates keep the previously delivered
+     * snapshot, so the menu body renders once for the committed level instead of twice
+     * for the round trip. Every other change (model switch, catalog load, errors) is
+     * delivered as-is.
+     *
+     * `folded` bounds the merge to one held snapshot per flight: the first bookkeeping
+     * step is absorbed, the next one passes through (adopting the shell's raw as the new
+     * view, so a shell that writes `current` before clearing `pending` never leaves the
+     * seat stuck on a pre-commit view — that would flash the slider back to the old level).
+     * The flag resets when the flight ends, so the next effort save gets its own fold.
+     * If the seat is unmounted mid-flight the flag simply dies with the coalescer; a new
+     * directory instance always starts with a fresh one.
+     */
+    function createEffortSnapshotCoalescer(getRaw, isFlightActive) {
+      let cache = null;
+      let folded = false;
+      return () => {
+        const raw = getRaw();
+        if (cache !== null && cache.raw === raw) return cache.view;
+        const flying = isFlightActive();
+        if (!flying && folded) folded = false;
+        if (cache !== null && flying && !folded && isEffortChurn(cache.view, raw)) {
+          folded = true;
+          cache = { raw, view: cache.view };
+          return cache.view;
+        }
+        cache = { raw, view: raw };
+        return raw;
+      };
+    }
+
+    /**
+     * Upper bound, in ms, for showing a saved level the directory has not reported yet. The
+     * directory reports it within one round trip; the bound only matters for a level it never
+     * reports, which then falls back to the stored one.
+     */
+    const OPTIMISTIC_HOLD_MS = 2000;
+
     /**
      * The gradient track. Pointer drags preview an index locally and commit once
      * on release, so a drag across five levels sends one selection instead of five.
@@ -483,6 +605,12 @@ window.__ModuleLoader__.load({
       // keeps the knob from waiting on (or snapping back before) the round trip. It belongs to the
       // model it was chosen on (`scope`), so it cannot outlive a switch to another model.
       const [optimistic, setOptimistic] = React.useState(null);
+      // The held level as a ref as well: a callback that outlives its render releases only the
+      // level it was started for, never one chosen after it.
+      const optimisticRef = React.useRef(null);
+      // The directory's level and model as of this render, read by those same callbacks.
+      const echoRef = React.useRef(null);
+      echoRef.current = { index, scope };
       const pending = optimistic !== null && optimistic.scope === scope ? optimistic.value : null;
       const last = Math.max(0, levels.length - 1);
       const committed = Math.min(Math.max(pending === null ? index : pending, 0), last);
@@ -548,6 +676,20 @@ window.__ModuleLoader__.load({
       /** Pressing without dragging: choose the level by midpoint zones only. */
       const pressedLevel = (clientX) => levelFromPosition(measure(clientX).f);
 
+      /** Drop the held level unless a newer choice has replaced it. */
+      const releaseOptimistic = (held) => {
+        if (held === null || optimisticRef.current !== held) return;
+        optimisticRef.current = null;
+        setOptimistic(null);
+      };
+
+      // With nothing in flight, the held level goes as soon as the directory reports that same
+      // level, so the knob never steps back to the previous level in between.
+      React.useEffect(() => {
+        const held = optimisticRef.current;
+        if (held !== null && !inflightRef.current && held.scope === scope && held.value === index) releaseOptimistic(held);
+      }, [index, scope]);
+
       /** Send levels one at a time; a click made while one is in flight replaces any queued one. */
       const run = (next) => {
         inflightRef.current = true;
@@ -557,7 +699,7 @@ window.__ModuleLoader__.load({
         } catch (_error) {
           result = Promise.resolve(false);
         }
-        const settle = () => {
+        const settle = (saved) => {
           if (queuedRef.current !== null) {
             const queued = queuedRef.current;
             queuedRef.current = null;
@@ -565,16 +707,28 @@ window.__ModuleLoader__.load({
             return;
           }
           inflightRef.current = false;
-          // Let the directory's own update render first, so a successful change does not
-          // flash back to the old level; a failed one falls back to it here. A timer rather than
-          // an animation frame: frames do not run in a background tab.
-          window.setTimeout(() => setOptimistic(null), 60);
+          const held = optimisticRef.current;
+          if (held === null) return;
+          const echo = echoRef.current;
+          // A failed save falls back to the stored level at once, and so does a level the
+          // directory already reports or one chosen on a model that is no longer current.
+          if (saved !== true || held.scope !== echo.scope || held.value === echo.index) {
+            releaseOptimistic(held);
+            return;
+          }
+          // Saved but not reported yet: the session projection can arrive after the selectModel
+          // reply. The effect above releases the level when it does; this timer only covers a
+          // directory that never reports this exact level. A timer rather than an animation
+          // frame: frames do not run in a background tab.
+          window.setTimeout(() => releaseOptimistic(held), OPTIMISTIC_HOLD_MS);
         };
-        result.then(settle, settle);
+        result.then(settle, () => settle(false));
       };
 
       const commit = (next) => {
-        setOptimistic({ scope, value: next });
+        const held = { scope, value: next };
+        optimisticRef.current = held;
+        setOptimistic(held);
         if (inflightRef.current) {
           queuedRef.current = next;
           return;
@@ -759,9 +913,25 @@ window.__ModuleLoader__.load({
      * @returns the trigger button plus, while open, a portaled menu.
      */
     function EffortSeat({ locked, available, directory, load, select, resolveText, t, manageModels }) {
+      const subscriptionRef = React.useRef(null);
       const state = React.useSyncExternalStore(
         (callback) => directory.subscribe(callback),
-        () => directory.getSnapshot(),
+        () => {
+          // Cache one subscription per directory instance: it carries the bookkeeping
+          // snapshot that an in-flight effort save coalesces away. Dropping the cache on
+          // every render would leak that state and re-render for the same churn.
+          if (subscriptionRef.current === null || subscriptionRef.current.directory !== directory) {
+            subscriptionRef.current = {
+              directory,
+              get: createEffortSnapshotCoalescer(
+                () => directory.getSnapshot(),
+                () => subscriptionRef.current !== null && subscriptionRef.current.isFlight(),
+              ),
+              isFlight: () => false,
+            };
+          }
+          return subscriptionRef.current.get();
+        },
       );
       const [open, setOpen] = React.useState(false);
       const [position, setPosition] = React.useState(null);
@@ -775,6 +945,15 @@ window.__ModuleLoader__.load({
       // True while an effort level is being saved. The directory reports that as `pending` too, but
       // only the effort block should react to it, not the model rows or the trigger.
       const [effortSaving, setEffortSaving] = React.useState(false);
+      // The same fact as a ref, for the subscription below: a snapshot the coalescer holds
+      // back carries no render, so a state update alone would resubscribe too late to catch
+      // the second half of the round trip.
+      const effortSavingRef = React.useRef(false);
+      effortSavingRef.current = effortSaving;
+      const setEffortSavingFlag = (value) => {
+        effortSavingRef.current = value;
+        setEffortSaving(value);
+      };
       const rootRef = React.useRef(null);
       const triggerRef = React.useRef(null);
       const menuRef = React.useRef(null);
@@ -786,6 +965,9 @@ window.__ModuleLoader__.load({
       // `state.error`'s catalog alert, while selection failures render from local `error`.
       const lastActionRef = React.useRef('load');
 
+      // The subscription is older than this render, so give it this render's in-flight
+      // check before the coalescer can be consulted again.
+      if (subscriptionRef.current !== null) subscriptionRef.current.isFlight = () => effortSavingRef.current;
       const groups = orderGroups(state.groups || []);
       const current = state.current;
       let currentGroup = null;
@@ -813,7 +995,17 @@ window.__ModuleLoader__.load({
       const waiting = currentModel === null && state.status === 'loading';
       const modelLabel = waiting ? t('trigger.loading') : currentModel === null ? t('trigger.fallback') : currentModel.name;
       const busy = state.pending !== null && state.pending !== undefined;
-      const modelBusy = busy && !effortSaving;
+      // A pending selection on the current provider and model only changes the effort level. The
+      // shell publishes such a snapshot together with the new level (the session projection lands
+      // before the selectModel reply), so only a pending switch to another model may dim the model
+      // rows, spin the trigger or lock the slider.
+      const effortOnlyPending =
+        busy &&
+        current !== null &&
+        current !== undefined &&
+        state.pending.provider === current.provider &&
+        state.pending.model === current.model;
+      const modelBusy = busy && !effortSaving && !effortOnlyPending;
       const loadFailures = Array.isArray(state.failures) ? state.failures : [];
       const loadError =
         lastActionRef.current !== 'load' || state.error === null || state.error === undefined || state.error === ''
@@ -1020,7 +1212,7 @@ window.__ModuleLoader__.load({
         if (current === null || current === undefined || level === undefined) return Promise.resolve(false);
         lastActionRef.current = 'select';
         setError(null);
-        setEffortSaving(true);
+        setEffortSavingFlag(true);
         const selection = { provider: current.provider, model: current.model };
         if (level.id !== undefined && level.id !== null) selection.reasoningEffort = level.id;
         return select(selection).then(
@@ -1039,7 +1231,7 @@ window.__ModuleLoader__.load({
           },
         ).then((saved) => {
           if (saved && (level.id === undefined || level.id === null)) clearLastEffort();
-          setEffortSaving(false);
+          setEffortSavingFlag(false);
           return saved;
         });
       };
@@ -1050,6 +1242,8 @@ window.__ModuleLoader__.load({
        * it, otherwise the new model's highest level is requested.
        */
       const chooseModel = (group, model) => {
+        // Any selection in flight blocks a switch, an effort save included (the rows stay enabled
+        // during one), so two selections never race in the session.
         if (busy || locked) return;
         if (current !== null && current !== undefined && current.provider === group.id && current.model === model.id) return;
         lastActionRef.current = 'select';
@@ -1141,7 +1335,7 @@ window.__ModuleLoader__.load({
             'aria-checked': selected,
             className: 'es-modelRow' + (selected ? ' es-modelRowSelected' : ''),
             title: model.name,
-            disabled: busy || locked,
+            disabled: modelBusy || locked,
             onClick: () => chooseModel(group, model),
           },
           h('span', { className: 'es-modelName' }, renderModelLabel(group, model)),
