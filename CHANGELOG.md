@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+- Works with the agent-teamwork switch that DSH `0.2.2-rc.3` added to the model menu: it is rendered below the thinking slider again, and hidden for subagent sessions as before.
+- On DSH `0.2.2-rc.3` and newer the shipped seat entry is reused instead of registering a second one, which the host rejected ("slot already declared") and which left the shipped menu in place.
+- The seat is mounted only once the shipped entry is visible, so this plugin can no longer cause the shipped registration to fail by declaring the options slot first. If the host refuses the component swap, a warning is logged and the shipped menu stays.
+
 ## 1.2.1
 
 - The model list no longer flickers while a thinking level is saved: the pending selection that already carries the new level no longer dims every model row or turns the trigger into a spinner.

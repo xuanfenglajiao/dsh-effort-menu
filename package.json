@@ -1,6 +1,6 @@
 {
   "name": "dsh-effort-menu",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Replaces the composer's model menu with a recent-models list, an all-providers flyout, and a draggable reasoning-effort slider.",
   "keywords": [
     "dsh-plugin",
@@ -48,7 +48,8 @@
     },
     "compatibility": {
       "dshReleases": {
-        "0.2.2-rc.1": "compatible"
+        "0.2.2-rc.1": "compatible",
+        "0.2.2-rc.3": "compatible"
       }
     },
     "client": {
