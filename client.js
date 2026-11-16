@@ -1,11 +1,14 @@
 /**
  * Client half of the effort-menu bundle.
  *
- * It shadows the composer's `conversation.input.model` single slot at priority -1
- * (the shipped seat registers at 0, and the lowest priority renders). The data
- * path is the shipped `modelDirectories` service, so this plugin adds no new
- * RPC and no second selection state: reading the directory and calling its
- * `select()` keeps the composer and the `/model` popup in sync.
+ * It replaces the composer's `conversation.input.model` seat. DSH 0.2.2-rc.3's
+ * shipped seat declares `conversation.input.model.options`; a second seat entry
+ * declaring the same child slot is rejected, so this plugin swaps the shipped
+ * entry's component instead and keeps its child declaration. Older hosts that
+ * do not declare the options slot fall back to a priority -1 entry.
+ * The data path is the shipped `modelDirectories` service, so this plugin adds
+ * no new RPC and no second selection state: reading the directory and calling
+ * its `select()` keeps the composer and the `/model` popup in sync.
  */
 window.__ModuleLoader__.load({
   id: 'dsh-effort-menu',
@@ -912,7 +915,7 @@ window.__ModuleLoader__.load({
      * @param props - owner share (`locked`), the injected directory face, and locale `t`.
      * @returns the trigger button plus, while open, a portaled menu.
      */
-    function EffortSeat({ locked, available, directory, load, select, resolveText, t, manageModels }) {
+    function EffortSeat({ locked, available, directory, load, select, resolveText, t, manageModels, renderSlot }) {
       const subscriptionRef = React.useRef(null);
       const state = React.useSyncExternalStore(
         (callback) => directory.subscribe(callback),
@@ -1475,6 +1478,16 @@ window.__ModuleLoader__.load({
               onCommit: submitEffort,
               scope: current === null ? '' : current.provider + '/' + current.model,
             }),
+        // Session options other plugins add to the model menu (agent teamwork is the first). The shipped
+        // seat renders this child slot below its reasoning cell; the entries decide for themselves
+        // whether they apply, so an empty slot adds nothing.
+        currentModel === null || typeof renderSlot !== 'function'
+          ? null
+          : renderSlot('conversation.input.model.options', {
+              locked: locked || busy,
+              dismiss: () => close(),
+              reportFailure: (message) => setError(message),
+            }),
         error === null ? null : h('div', { className: 'es-error' }, h('span', { className: 'es-errorText' }, error)),
       );
 
@@ -1640,12 +1653,58 @@ window.__ModuleLoader__.load({
         scope.effect(() => scope.locale.register(NS, { zh, en }), 'effort-menu: dictionaries');
         const models = scope.modelDirectories;
         const sessions = scope.sessions;
-        scope.slots.inject('conversation.input.model', () =>
+        const SEAT_SLOT = 'conversation.input.model';
+        const OPTIONS_SLOT = 'conversation.input.model.options';
+        const effortT = scope.locale.bind(NS);
+        const manageModels = () => openModelsSettings(scope);
+        const seat = (props) => h(EffortSeat, Object.assign({}, props, { t: effortT, manageModels }));
+
+        /**
+         * Make mounted outlets re-read the seat slot. Replacing a stored component in place raises no
+         * change notification, so a transient registration at the lowest precedence is added and removed:
+         * it never renders (the lowest priority number wins) but it bumps the slot version.
+         */
+        const refreshOutlets = () => {
+          try {
+            scope.slots.register({ name: SEAT_SLOT, priority: Number.MAX_SAFE_INTEGER }, () => null)();
+          } catch (error) {
+            // Best effort: an inactive context during teardown is expected, and the next render still reads the new component.
+          }
+        };
+
+        /**
+         * Replace the component of the shipped seat entry, which keeps its own child-slot declarations.
+         * @param entry - the shipped entry as listed by the slot registry.
+         * @returns the undo function, or null when the host refuses the write (frozen or replaced object).
+         */
+        const swapShippedComponent = (entry) => {
+          const original = entry.component;
+          try {
+            entry.component = seat;
+          } catch (error) {
+            return null;
+          }
+          if (entry.component !== seat) return null;
+          refreshOutlets();
+          return () => {
+            if (entry.component !== seat) return;
+            try {
+              entry.component = original;
+            } catch (error) {
+              return;
+            }
+            refreshOutlets();
+          };
+        };
+
+        /** Older hosts: the shipped seat declares no options slot, so a priority -1 entry may declare it. */
+        const registerOwnSeat = () =>
           scope.slots.register(
             {
-              name: 'conversation.input.model',
+              name: SEAT_SLOT,
               priority: -1,
               locale: NS,
+              children: { [OPTIONS_SLOT]: { kind: 'list', scope: 'session' } },
               inject: (sessionId) => {
                 const directory = models.directoryFor(sessionId);
                 const available = sessions.subagentAddress(sessionId) === undefined;
@@ -1657,13 +1716,64 @@ window.__ModuleLoader__.load({
                   },
                   resolveText: (text) => scope.locale.resolveText(text),
                   select: (selection) => (available ? directory.select(selection) : Promise.resolve(undefined)),
-                  manageModels: () => openModelsSettings(scope),
+                  manageModels,
                 };
               },
             },
             EffortSeat,
-          ),
-        );
+          );
+
+        scope.slots.inject(SEAT_SLOT, () => {
+          // The mount path depends on what the shipped seat declares, and that entry may register after this
+          // plugin starts. Declaring the options slot before it does would make the shipped registration fail
+          // ("already declared"), so nothing is mounted until the shipped entry is visible.
+          let mounted = null; // { entry, undo } for the active mount
+          let stopped = false;
+          let warned = false;
+
+          const shippedEntry = () => scope.slots.entries(SEAT_SLOT).find((entry) => entry.locale === 'model');
+
+          const reconcile = () => {
+            if (stopped) return;
+            if (mounted !== null) {
+              // An entry of our own stays until teardown. A swapped shipped entry is stale once the shipped
+              // plugin reloads and its old entry leaves the registry; then it is undone and mounted again.
+              if (mounted.entry === null || scope.slots.entries(SEAT_SLOT).includes(mounted.entry)) return;
+              const stale = mounted;
+              mounted = null;
+              stale.undo();
+            }
+            const entry = shippedEntry();
+            if (entry === undefined) return;
+            if (entry.children !== undefined && entry.children[OPTIONS_SLOT] !== undefined) {
+              const undo = swapShippedComponent(entry);
+              if (undo === null) {
+                if (!warned) {
+                  warned = true;
+                  console.warn('[dsh-effort-menu] the shipped model seat cannot be replaced on this host; keeping the shipped menu');
+                }
+                return;
+              }
+              mounted = { entry, undo };
+              return;
+            }
+            try {
+              mounted = { entry: null, undo: registerOwnSeat() };
+            } catch (error) {
+              // A failed declaration must not leave the composer without a model menu or break the shipped one.
+              console.warn('[dsh-effort-menu] could not mount the model seat; keeping the shipped menu', error);
+            }
+          };
+
+          const unsubscribe = scope.slots.subscribe(SEAT_SLOT, reconcile);
+          reconcile();
+          return () => {
+            stopped = true;
+            unsubscribe();
+            if (mounted !== null) mounted.undo();
+            mounted = null;
+          };
+        });
       });
     }
 

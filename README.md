@@ -101,6 +101,7 @@ Run `pnpm install` and restart the app.
 
 ## Known limitations
 
-- **One occupant of the model slot.** The plugin takes over the single slot `conversation.input.model` at priority `-1`, shadowing the shipped selector. Another plugin that replaces the same slot competes for it, so install only one. Plugins that restyle the shipped selector from outside may not apply to this menu.
+- **One occupant of the model slot.** The plugin takes over the single slot `conversation.input.model`. On DSH `0.2.2-rc.3` and newer it swaps the component of the shipped entry in place, because that entry declares the `conversation.input.model.options` child slot (the agent-teamwork switch is rendered there) and a second declaration is rejected. On older hosts it registers its own entry at priority `-1`. Another plugin that replaces the same slot competes for it, so install only one. Plugins that restyle the shipped selector from outside may not apply to this menu.
+- **Host-internal swap.** The in-place swap relies on the shipped entry being writable. If a future host refuses the write, the plugin logs a warning and leaves the shipped menu untouched.
 - **The model label sub-slot is not extensible.** `conversation.input.model.label` is declared by the shipped model-selection package, and a second declaration makes the whole client entry fail to load. This plugin therefore renders model names itself, and labels that other plugins contribute to that sub-slot do not appear here.
 - **No automated tests yet.** Changes are checked by hand in a running app.
